@@ -4,8 +4,11 @@ from typing import List, Optional, Dict
 from datetime import datetime
 from enum import Enum
 import hashlib, secrets, uuid
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
 
 app = FastAPI(title="Task Manager API", version="1.0.0")
+security = HTTPBearer()
 
 # ── Enums & Schemas ──────────────────────────────────────────────────────────
 
@@ -53,10 +56,11 @@ def _id() -> str:
 
 # ── Auth dependency ───────────────────────────────────────────────────────────
 
-def current_user(authorization: Optional[str] = Header(None)) -> dict:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid token")
-    user_id = tokens_db.get(authorization.removeprefix("Bearer "))
+def current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> dict:
+    token = credentials.credentials
+    user_id = tokens_db.get(token)
     if not user_id or user_id not in users_db:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
     return users_db[user_id]
@@ -188,6 +192,14 @@ def task_summary(user: dict = Depends(current_user)):
 @app.get("/health", tags=["General"])
 def health():
     return {"status": "ok", "timestamp": _now()}
+
+@app.get("/", tags=["General"])
+def root():
+    return {
+        "message": "Task Manager API", 
+        "version": "1.0.0",
+        "docs": "/docs"
+    }
 
 if __name__ == "__main__":
     import uvicorn
