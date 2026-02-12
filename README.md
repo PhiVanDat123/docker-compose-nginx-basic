@@ -62,10 +62,10 @@ docker compose up -d --build
 ### Dừng một instance để bảo trì
 
 ```bash
-docker compose stop todo-api-2
+docker compose stop app2
 # Nginx tự động ngừng gửi request đến container này.
 # Khởi động lại:
-docker compose start todo-api-2
+docker compose start app2
 ```
 
 ---
